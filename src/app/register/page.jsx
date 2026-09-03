@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -19,6 +19,14 @@ import {
 } from "lucide-react";
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterLoader />}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -40,10 +48,6 @@ export default function RegisterPage() {
 
   /*
    * Preserve booking context.
-   *
-   * Example:
-   *
-   * /register?redirect=/booking&spot=A-04&area=Ocean%20Mall&floor=2
    */
 
   const redirect =
@@ -58,7 +62,8 @@ export default function RegisterPage() {
    */
 
   useEffect(() => {
-    const existingUser = localStorage.getItem("spotgo_user");
+    const existingUser =
+      localStorage.getItem("spotgo_user");
 
     if (existingUser) {
       router.replace("/dashboard");
@@ -116,8 +121,6 @@ export default function RegisterPage() {
 
     /*
      * FRONTEND DEMO REGISTRATION
-     *
-     * Later replace this with your API.
      */
 
     const user = {
@@ -166,13 +169,14 @@ export default function RegisterPage() {
 
   const loginUrl = `/login?redirect=${encodeURIComponent(
     redirect
-  )}&spot=${encodeURIComponent(spot)}&area=${encodeURIComponent(
+  )}&spot=${encodeURIComponent(
+    spot
+  )}&area=${encodeURIComponent(
     area
   )}&floor=${encodeURIComponent(floor)}`;
 
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
-
       <div className="grid min-h-screen lg:grid-cols-[0.9fr_1.1fr]">
 
         {/* =========================================================
@@ -191,15 +195,14 @@ export default function RegisterPage() {
                 href="/"
                 className="flex items-center gap-3"
               >
-
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#07111f] text-white">
                   <Car size={21} />
                 </div>
 
                 <div>
-
                   <div className="text-[18px] font-black tracking-[0.18em]">
-                    SPOT<span className="text-cyan-500">
+                    SPOT
+                    <span className="text-cyan-500">
                       GO
                     </span>
                   </div>
@@ -207,9 +210,7 @@ export default function RegisterPage() {
                   <div className="text-[10px] font-medium tracking-[0.16em] text-slate-400">
                     SMART PARKING
                   </div>
-
                 </div>
-
               </Link>
 
             </div>
@@ -339,7 +340,9 @@ export default function RegisterPage() {
                   <input
                     id="password"
                     type={
-                      showPassword ? "text" : "password"
+                      showPassword
+                        ? "text"
+                        : "password"
                     }
                     value={form.password}
                     onChange={(e) =>
@@ -357,7 +360,9 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() =>
-                      setShowPassword((value) => !value)
+                      setShowPassword(
+                        (value) => !value
+                      )
                     }
                     aria-label={
                       showPassword
@@ -633,13 +638,17 @@ export default function RegisterPage() {
             >
 
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#07111f] shadow-xl">
-                <Car size={21} strokeWidth={2.4} />
+                <Car
+                  size={21}
+                  strokeWidth={2.4}
+                />
               </div>
 
               <div>
 
                 <div className="text-[18px] font-black tracking-[0.18em] text-white">
-                  SPOT<span className="text-cyan-400">
+                  SPOT
+                  <span className="text-cyan-400">
                     GO
                   </span>
                 </div>
@@ -873,7 +882,10 @@ function Benefit({ title, text }) {
     <div className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4 backdrop-blur">
 
       <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-400">
-        <Check size={15} strokeWidth={3} />
+        <Check
+          size={15}
+          strokeWidth={3}
+        />
       </div>
 
       <div>
@@ -889,5 +901,25 @@ function Benefit({ title, text }) {
       </div>
 
     </div>
+  );
+}
+
+/* ===============================================================
+   REGISTER LOADER
+================================================================ */
+
+function RegisterLoader() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#f6f8fb]">
+      <div className="flex flex-col items-center gap-4">
+
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#07111f] text-white">
+          <Car size={22} />
+        </div>
+
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-cyan-500" />
+
+      </div>
+    </main>
   );
 }
