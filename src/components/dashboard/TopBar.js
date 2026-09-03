@@ -147,7 +147,7 @@ export default function TopBar({ onMenuClick }) {
                 text-white
               "
             >
-              MS
+              MA
             </div>
 
             {/* User Info */}
