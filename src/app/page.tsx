@@ -36,6 +36,7 @@ import { useMemo, useState } from "react";
 import SpotGoNavbar from "@/components/SpotGoNavbar";
 import SpotGoFooter from "@/components/SpotGoFooter";
 
+
 type SpotType = "standard" | "vip";
 type SpotStatus = "available" | "reserved" | "booked";
 

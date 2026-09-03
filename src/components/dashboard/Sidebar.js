@@ -1,14 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   MapPin,
   CalendarCheck2,
-  Car,
-  Clock3,
-  Heart,
   CreditCard,
   Bell,
   Settings,
@@ -16,6 +14,8 @@ import {
   LogOut,
   ChevronRight,
   X,
+  Wallet,
+  XCircle,
 } from "lucide-react";
 
 const mainLinks = [
@@ -35,23 +35,23 @@ const mainLinks = [
     icon: CalendarCheck2,
   },
   {
-    label: "My Vehicles",
-    href: "/user/vehicles",
-    icon: Car,
+    label: "Booking History",
+    href: "/user/bookinghistory",
+    icon: CalendarCheck2,
   },
   {
-    label: "Parking History",
-    href: "/user/history",
-    icon: Clock3,
-  },
-  {
-    label: "Saved Locations",
-    href: "/user/saved",
-    icon: Heart,
+    label: "Cancel Reservation",
+    href: "/user/cancel-reservation",
+    icon: XCircle,
   },
 ];
 
 const accountLinks = [
+  {
+    label: "Wallet",
+    href: "/user/wallet",
+    icon: Wallet,
+  },
   {
     label: "Payments",
     href: "/user/payments",
@@ -80,7 +80,11 @@ export default function Sidebar({
       return pathname === "/user/dashboard";
     }
 
-    return pathname.startsWith(href);
+    if (href === "/#locations") {
+      return false;
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
   };
 
   const handleLogout = () => {
@@ -134,36 +138,25 @@ export default function Sidebar({
           }
         `}
       >
-
         {/* ===================================================
             LOGO
         ==================================================== */}
 
-        <div className="flex h-[82px] items-center justify-between border-b border-slate-100 px-6">
-
+        <div className="flex h-[82px] items-center justify-between border-b border-slate-100 px-5">
           <Link
             href="/user/dashboard"
             onClick={onClose}
-            className="flex items-center gap-3"
+            className="flex min-w-0 items-center"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#07111f] text-white shadow-lg shadow-slate-900/10">
-              <Car
-                size={20}
-                strokeWidth={2.5}
+            <div className="relative h-30 w-[175px]">
+              <Image
+                src="/spotgo_logo.png"
+                alt="SPOT-GO"
+                fill
+                priority
+                sizes="300px"
+                className="object-contain object-left h-30"
               />
-            </div>
-
-            <div>
-              <div className="text-[17px] font-black tracking-[0.16em] text-[#07111f]">
-                SPOT
-                <span className="text-cyan-500">
-                  GO
-                </span>
-              </div>
-
-              <div className="text-[9px] font-bold tracking-[0.14em] text-slate-400">
-                SMART PARKING
-              </div>
             </div>
           </Link>
 
@@ -174,7 +167,7 @@ export default function Sidebar({
             onClick={onClose}
             aria-label="Close menu"
             className="
-              flex h-9 w-9
+              flex h-9 w-9 shrink-0
               items-center justify-center
               rounded-xl
               text-slate-400
@@ -194,7 +187,6 @@ export default function Sidebar({
 
         <div className="mx-4 mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-3.5">
           <div className="flex items-center gap-3">
-
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#07111f] text-sm font-black text-white">
               SG
             </div>
@@ -218,7 +210,6 @@ export default function Sidebar({
         ==================================================== */}
 
         <nav className="flex-1 overflow-y-auto px-4 py-6">
-
           {/* Main */}
 
           <div className="mb-3 px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
@@ -226,7 +217,6 @@ export default function Sidebar({
           </div>
 
           <div className="space-y-1">
-
             {mainLinks.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -272,7 +262,6 @@ export default function Sidebar({
                 </Link>
               );
             })}
-
           </div>
 
           {/* Account */}
@@ -282,7 +271,6 @@ export default function Sidebar({
           </div>
 
           <div className="space-y-1">
-
             {accountLinks.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -300,13 +288,14 @@ export default function Sidebar({
 
                     ${
                       active
-                        ? "bg-[#07111f] text-white"
+                        ? "bg-[#07111f] text-white shadow-[0_8px_20px_rgba(7,17,31,.14)]"
                         : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                     }
                   `}
                 >
                   <Icon
                     size={18}
+                    strokeWidth={active ? 2.4 : 2}
                     className={
                       active
                         ? "text-cyan-400"
@@ -327,7 +316,6 @@ export default function Sidebar({
                 </Link>
               );
             })}
-
           </div>
 
           {/* =================================================
@@ -335,7 +323,6 @@ export default function Sidebar({
           ================================================== */}
 
           <div className="mt-8 rounded-2xl bg-[#07111f] p-4">
-
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-cyan-400">
               <HelpCircle size={18} />
             </div>
@@ -355,7 +342,6 @@ export default function Sidebar({
               Contact support
               <ChevronRight size={13} />
             </button>
-
           </div>
         </nav>
 
@@ -364,7 +350,6 @@ export default function Sidebar({
         ==================================================== */}
 
         <div className="border-t border-slate-100 p-4">
-
           <button
             type="button"
             onClick={handleLogout}
@@ -388,11 +373,8 @@ export default function Sidebar({
               "
             />
 
-            <span>
-              Sign out
-            </span>
+            <span>Sign out</span>
           </button>
-
         </div>
       </aside>
     </>
