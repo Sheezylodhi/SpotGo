@@ -35,6 +35,7 @@ import { useMemo, useState } from "react";
 
 import SpotGoNavbar from "@/components/SpotGoNavbar";
 import SpotGoFooter from "@/components/SpotGoFooter";
+import GlobalLoader from "@/components/GlobalLoader";
 
 
 type SpotType = "standard" | "vip";
@@ -1401,6 +1402,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#f7f9f8] text-slate-950">
+      <GlobalLoader />
       <SpotGoNavbar />
 
       {/* HERO */}

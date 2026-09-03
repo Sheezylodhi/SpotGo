@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,6 +15,8 @@ import {
   MapPin,
   ShieldCheck,
   Sparkles,
+  User,
+  UserRound,
 } from "lucide-react";
 
 export default function LoginPage() {
@@ -28,6 +31,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   // ---------------------------------------------------------
+  // ROLE
+  // ---------------------------------------------------------
+
+  const [role, setRole] = useState("");
+
+  // ---------------------------------------------------------
   // BOOKING CONTEXT
   // ---------------------------------------------------------
 
@@ -38,6 +47,13 @@ export default function LoginPage() {
   const [locationId, setLocationId] = useState("");
   const [locationName, setLocationName] = useState("");
   const [price, setPrice] = useState("120");
+
+  // ---------------------------------------------------------
+  // DIRECT LOGIN CHECK
+  // ---------------------------------------------------------
+
+  const [isBookingFlow, setIsBookingFlow] = useState(false);
+  const [pageReady, setPageReady] = useState(false);
 
   // ---------------------------------------------------------
   // READ LOGIN / BOOKING QUERY
@@ -55,13 +71,13 @@ export default function LoginPage() {
     const priceParam = params.get("price");
 
     /*
-     * Only booking is allowed as a special redirect.
+     * ONLY booking is allowed as a special redirect.
      *
      * /login
-     *       -> /user/dashboard
+     *       -> role selection
      *
      * /login?redirect=/user/booking...
-     *       -> /user/booking
+     *       -> existing booking flow
      */
 
     const safeRedirect =
@@ -69,13 +85,21 @@ export default function LoginPage() {
         ? "/user/booking"
         : "/user/dashboard";
 
+    const booking =
+      redirectParam === "/user/booking" &&
+      Boolean(spotParam);
+
     setRedirect(safeRedirect);
+    setIsBookingFlow(booking);
+
     setSpot(spotParam || "");
     setArea(areaParam || "");
     setFloor(floorParam || "");
     setLocationId(locationIdParam || "");
     setLocationName(locationNameParam || "");
     setPrice(priceParam || "120");
+
+    setPageReady(true);
   }, []);
 
   // ---------------------------------------------------------
@@ -83,6 +107,8 @@ export default function LoginPage() {
   // ---------------------------------------------------------
 
   useEffect(() => {
+    if (!pageReady) return;
+
     const params = new URLSearchParams(window.location.search);
 
     const redirectParam = params.get("redirect");
@@ -98,16 +124,21 @@ export default function LoginPage() {
     }
 
     /*
-     * USER CAME FROM:
+     * -------------------------------------------------------
+     * BOOKING FLOW
+     * -------------------------------------------------------
      *
+     * User already logged in
+     *
+     * Parking
+     *   ↓
      * Select Spot
-     *    ↓
-     * Reserve this spot
-     *    ↓
+     *   ↓
+     * Reserve
+     *   ↓
      * Login
      *
-     * Since user is already logged in,
-     * directly continue to booking.
+     * Continue directly to booking.
      */
 
     if (
@@ -136,13 +167,39 @@ export default function LoginPage() {
     }
 
     /*
-     * NORMAL LOGIN PAGE
+     * -------------------------------------------------------
+     * EXISTING LOGIN
+     * -------------------------------------------------------
      *
-     * Already logged-in user goes to dashboard.
+     * If user is already logged in, detect their role.
      */
 
-    router.replace("/user/dashboard");
-  }, [router]);
+    try {
+      const parsedUser = JSON.parse(existingUser);
+
+      if (parsedUser?.role === "admin") {
+        router.replace("/admin/dashboard");
+        return;
+      }
+
+      router.replace("/user/dashboard");
+    } catch {
+      /*
+       * If old login data doesn't contain a role,
+       * treat it as a normal user account.
+       */
+      router.replace("/user/dashboard");
+    }
+  }, [router, pageReady]);
+
+  // ---------------------------------------------------------
+  // ROLE SELECTION
+  // ---------------------------------------------------------
+
+  const handleRoleChange = (selectedRole) => {
+    setRole(selectedRole);
+    setError("");
+  };
 
   // ---------------------------------------------------------
   // LOGIN SUBMIT
@@ -158,6 +215,17 @@ export default function LoginPage() {
       return;
     }
 
+    /*
+     * -------------------------------------------------------
+     * BOOKING FLOW DOES NOT NEED ROLE SELECTION
+     * -------------------------------------------------------
+     */
+
+    if (!isBookingFlow && !role) {
+      setError("Please select how you want to continue.");
+      return;
+    }
+
     setLoading(true);
 
     /*
@@ -170,10 +238,21 @@ export default function LoginPage() {
      * Password is NEVER stored.
      */
 
+    const selectedRole = isBookingFlow
+      ? "user"
+      : role;
+
     const user = {
       id: `user_${Date.now()}`,
       name: email.trim().split("@")[0],
       email: email.trim(),
+
+      /*
+       * Save role so the system knows
+       * whether this is an admin or user.
+       */
+      role: selectedRole,
+
       loggedIn: true,
       loginAt: new Date().toISOString(),
     };
@@ -209,13 +288,11 @@ export default function LoginPage() {
      *   ↓
      * Select Spot
      *   ↓
-     * Reserve this spot
+     * Reserve
      *   ↓
      * Login
      *
-     * then preserve the booking and go to:
-     *
-     * /user/booking
+     * preserve booking.
      */
 
     if (
@@ -238,11 +315,6 @@ export default function LoginPage() {
         JSON.stringify(pendingBooking)
       );
 
-      /*
-       * Give the UI a small moment to show
-       * "Signing in..."
-       */
-
       setTimeout(() => {
         router.replace("/user/booking");
       }, 400);
@@ -251,21 +323,15 @@ export default function LoginPage() {
     }
 
     // ---------------------------------------------------------
-    // NORMAL LOGIN FLOW
+    // NORMAL ROLE LOGIN
     // ---------------------------------------------------------
 
-    /*
-     * If user simply opened:
-     *
-     * /login
-     *
-     * then ALWAYS go to:
-     *
-     * /user/dashboard
-     */
-
     setTimeout(() => {
-      router.replace("/user/dashboard");
+      if (selectedRole === "admin") {
+        router.replace("/admin/dashboard");
+      } else {
+        router.replace("/user/dashboard");
+      }
     }, 400);
   };
 
@@ -317,6 +383,10 @@ export default function LoginPage() {
       ? `/register?${registerParams.toString()}`
       : "/register";
 
+  // ---------------------------------------------------------
+  // PAGE
+  // ---------------------------------------------------------
+
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
       <div className="grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
@@ -344,30 +414,35 @@ export default function LoginPage() {
 
             {/* Logo */}
 
-            <Link
-              href="/"
-              className="flex w-fit items-center gap-3"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#07111f] shadow-xl">
-                <Car
-                  size={21}
-                  strokeWidth={2.4}
-                />
-              </div>
+<Link
+  href="/"
+  className="flex w-fit items-center gap-3"
+>
+  {/* LOGO */}
+  <div className="flex h-30 w-30 shrink-0 items-center justify-center">
+    <img
+      src="/spotgo_logo.png"
+      alt="SPOT-GO"
+      className="h-full w-full object-contain"
+    />
+  </div>
 
-              <div>
-                <div className="text-[18px] font-black tracking-[0.18em] text-white">
-                  SPOT
-                  <span className="text-cyan-400">
-                    GO
-                  </span>
-                </div>
+  {/* BRAND TEXT */}
+  <div>
+    <div className="text-[18px] font-black tracking-[0.18em] text-white">
+      SPOT
+      <span className="text-cyan-400">
+        GO
+      </span>
+    </div>
 
-                <div className="text-[10px] font-medium tracking-[0.16em] text-slate-400">
-                  SMART PARKING
-                </div>
-              </div>
-            </Link>
+    <div className="text-[10px] font-medium tracking-[0.16em] text-slate-400">
+      SMART PARKING
+    </div>
+  </div>
+</Link>
+
+
 
             {/* Main */}
 
@@ -511,39 +586,45 @@ export default function LoginPage() {
 
           <div className="w-full max-w-[470px]">
 
-            {/* Mobile Logo */}
+            {/* =================================================
+                MOBILE LOGO
+            ================================================== */}
 
             <div className="mb-10 flex lg:hidden">
 
               <Link
-                href="/"
-                className="flex items-center gap-3"
-              >
+  href="/"
+  className="flex w-fit items-center gap-3"
+>
+  {/* LOGO */}
+  <div className="flex h-20 w-20 shrink-0 items-center justify-center">
+    <img
+      src="/spotgo_logo.png"
+      alt="SPOT-GO"
+      className="h-full w-full object-contain"
+    />
+  </div>
 
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#07111f] text-white">
-                  <Car size={21} />
-                </div>
+  {/* BRAND TEXT */}
+  <div>
+    <div className="text-[18px] font-black tracking-[0.18em] text-white">
+      SPOT
+      <span className="text-cyan-400">
+        GO
+      </span>
+    </div>
 
-                <div>
-
-                  <div className="text-[18px] font-black tracking-[0.18em]">
-                    SPOT
-                    <span className="text-cyan-500">
-                      GO
-                    </span>
-                  </div>
-
-                  <div className="text-[10px] font-medium tracking-[0.16em] text-slate-400">
-                    SMART PARKING
-                  </div>
-
-                </div>
-
-              </Link>
+    <div className="text-[10px] font-medium tracking-[0.16em] text-slate-400">
+      SMART PARKING
+    </div>
+  </div>
+</Link>
 
             </div>
 
-            {/* Heading */}
+            {/* =================================================
+                HEADING
+            ================================================== */}
 
             <div>
 
@@ -561,7 +642,119 @@ export default function LoginPage() {
 
             </div>
 
-            {/* Selected Spot */}
+            {/* =================================================
+                SELECT ROLE
+            ================================================== */}
+
+            {!isBookingFlow && (
+              <div className="mt-7">
+
+                <div className="mb-3 flex items-center justify-between">
+                  <label className="text-[13px] font-bold text-slate-700">
+                    Continue as
+                  </label>
+
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                    Select role
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+
+                  {/* USER */}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleRoleChange("user")
+                    }
+                    className={`group relative overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200 ${
+                      role === "user"
+                        ? "border-cyan-400 bg-cyan-50 shadow-lg shadow-cyan-500/10"
+                        : "border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/40"
+                    }`}
+                  >
+
+                    {role === "user" && (
+                      <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-white">
+                        <Check
+                          size={12}
+                          strokeWidth={3}
+                        />
+                      </div>
+                    )}
+
+                    <div
+                      className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl transition ${
+                        role === "user"
+                          ? "bg-cyan-500 text-white"
+                          : "bg-slate-100 text-slate-500 group-hover:bg-cyan-100 group-hover:text-cyan-600"
+                      }`}
+                    >
+                      <UserRound size={19} />
+                    </div>
+
+                    <p className="text-sm font-black text-slate-900">
+                      User
+                    </p>
+
+                    <p className="mt-1 text-[11px] leading-4 text-slate-400">
+                      Find & reserve parking
+                    </p>
+
+                  </button>
+
+                  {/* ADMIN */}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleRoleChange("admin")
+                    }
+                    className={`group relative overflow-hidden rounded-2xl border p-4 text-left transition-all duration-200 ${
+                      role === "admin"
+                        ? "border-violet-400 bg-violet-50 shadow-lg shadow-violet-500/10"
+                        : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/40"
+                    }`}
+                  >
+
+                    {role === "admin" && (
+                      <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-violet-500 text-white">
+                        <Check
+                          size={12}
+                          strokeWidth={3}
+                        />
+                      </div>
+                    )}
+
+                    <div
+                      className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl transition ${
+                        role === "admin"
+                          ? "bg-violet-500 text-white"
+                          : "bg-slate-100 text-slate-500 group-hover:bg-violet-100 group-hover:text-violet-600"
+                      }`}
+                    >
+                      <ShieldCheck size={19} />
+                    </div>
+
+                    <p className="text-sm font-black text-slate-900">
+                      Admin
+                    </p>
+
+                    <p className="mt-1 text-[11px] leading-4 text-slate-400">
+                      Manage parking system
+                    </p>
+
+                  </button>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* =================================================
+                SELECTED SPOT
+            ================================================== */}
 
             {spot && (
               <div className="mt-6 flex items-center gap-3 rounded-2xl border border-cyan-100 bg-cyan-50/70 p-4">
@@ -595,7 +788,9 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Error */}
+            {/* =================================================
+                ERROR
+            ================================================== */}
 
             {error && (
               <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-600">
@@ -603,14 +798,16 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Form */}
+            {/* =================================================
+                FORM
+            ================================================== */}
 
             <form
               onSubmit={handleSubmit}
-              className="mt-8 space-y-5"
+              className={`${isBookingFlow ? "mt-8" : "mt-6"} space-y-5`}
             >
 
-              {/* Email */}
+              {/* EMAIL */}
 
               <div>
 
@@ -646,7 +843,7 @@ export default function LoginPage() {
 
               </div>
 
-              {/* Password */}
+              {/* PASSWORD */}
 
               <div>
 
@@ -720,7 +917,7 @@ export default function LoginPage() {
 
               </div>
 
-              {/* Remember */}
+              {/* REMEMBER */}
 
               <label className="flex cursor-pointer items-center gap-3">
 
@@ -750,7 +947,7 @@ export default function LoginPage() {
 
               </label>
 
-              {/* Login */}
+              {/* LOGIN */}
 
               <button
                 type="submit"
@@ -779,7 +976,9 @@ export default function LoginPage() {
 
             </form>
 
-            {/* Divider */}
+            {/* =================================================
+                DIVIDER
+            ================================================== */}
 
             <div className="my-7 flex items-center gap-4">
 
@@ -793,7 +992,9 @@ export default function LoginPage() {
 
             </div>
 
-            {/* Google */}
+            {/* =================================================
+                GOOGLE
+            ================================================== */}
 
             <button
               type="button"
@@ -808,7 +1009,9 @@ export default function LoginPage() {
 
             </button>
 
-            {/* Register */}
+            {/* =================================================
+                REGISTER
+            ================================================== */}
 
             <p className="mt-8 text-center text-sm text-slate-500">
 
@@ -823,7 +1026,7 @@ export default function LoginPage() {
 
             </p>
 
-            {/* Security */}
+            {/* SECURITY */}
 
             <div className="mt-9 flex items-center justify-center gap-2 text-[11px] font-medium text-slate-400">
               <ShieldCheck size={14} />
@@ -861,3 +1064,4 @@ function Feature({ icon, title, text }) {
     </div>
   );
 }
+

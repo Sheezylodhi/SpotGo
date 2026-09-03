@@ -191,27 +191,33 @@ function RegisterForm() {
 
             <div className="mb-9 flex lg:hidden">
 
-              <Link
-                href="/"
-                className="flex items-center gap-3"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#07111f] text-white">
-                  <Car size={21} />
-                </div>
+             <Link
+  href="/"
+  className="flex w-fit items-center gap-3"
+>
+  {/* LOGO */}
+  <div className="flex h-20 w-20 shrink-0 items-center justify-center">
+    <img
+      src="/spotgo_logo.png"
+      alt="SPOT-GO"
+      className="h-full w-full object-contain"
+    />
+  </div>
 
-                <div>
-                  <div className="text-[18px] font-black tracking-[0.18em]">
-                    SPOT
-                    <span className="text-cyan-500">
-                      GO
-                    </span>
-                  </div>
+  {/* BRAND TEXT */}
+  <div>
+    <div className="text-[18px] font-black tracking-[0.18em] text-white">
+      SPOT
+      <span className="text-cyan-400">
+        GO
+      </span>
+    </div>
 
-                  <div className="text-[10px] font-medium tracking-[0.16em] text-slate-400">
-                    SMART PARKING
-                  </div>
-                </div>
-              </Link>
+    <div className="text-[10px] font-medium tracking-[0.16em] text-slate-400">
+      SMART PARKING
+    </div>
+  </div>
+</Link>
 
             </div>
 
@@ -636,29 +642,28 @@ function RegisterForm() {
               href="/"
               className="flex w-fit items-center gap-3"
             >
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#07111f] shadow-xl">
-                <Car
-                  size={21}
-                  strokeWidth={2.4}
+              {/* LOGO */}
+              <div className="flex h-30 w-30 shrink-0 items-center justify-center">
+                <img
+                  src="/spotgo_logo.png"
+                  alt="SPOT-GO"
+                  className="h-full w-full object-contain"
                 />
               </div>
-
+            
+              {/* BRAND TEXT */}
               <div>
-
                 <div className="text-[18px] font-black tracking-[0.18em] text-white">
                   SPOT
                   <span className="text-cyan-400">
                     GO
                   </span>
                 </div>
-
+            
                 <div className="text-[10px] font-medium tracking-[0.16em] text-slate-400">
                   SMART PARKING
                 </div>
-
               </div>
-
             </Link>
 
             {/* Content */}
