@@ -174,7 +174,7 @@ function OverviewDashboard({ user }) {
         </div>
 
         <Link
-          href="/parking"
+          href="/#locations"
           className="group flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#07111f] px-5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(7,17,31,.14)] transition hover:-translate-y-0.5 hover:bg-slate-900"
         >
           <MapPin size={17} className="text-cyan-400" />
